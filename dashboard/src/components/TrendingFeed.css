@@ -1,0 +1,79 @@
+.trending-feed {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.trending-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.trending-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.trending-rank {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  min-width: 40px;
+}
+
+.trending-content {
+  flex: 1;
+}
+
+.trending-id {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.trending-stats {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.trending-stats span {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.trending-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.metric {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.metric-label {
+  opacity: 0.7;
+}
+
+.metric-value {
+  font-weight: bold;
+}
+
+.viral-prob .metric-value {
+  color: #ff6b6b;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.6;
+}

@@ -1,0 +1,103 @@
+.viral-predictions {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.prediction-item {
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.prediction-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.prediction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.post-id {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.probability {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+.probability.high {
+  background: #ff6b6b;
+  color: white;
+}
+
+.probability.medium {
+  background: #ffa500;
+  color: white;
+}
+
+.probability.low {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.probability-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.probability-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #ff6b6b 100%);
+  transition: width 0.5s ease;
+}
+
+.prediction-details {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  opacity: 0.7;
+}
+
+.detail-value {
+  font-weight: bold;
+}
+
+.viral-badge {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 107, 107, 0.2);
+  border-radius: 4px;
+  text-align: center;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
