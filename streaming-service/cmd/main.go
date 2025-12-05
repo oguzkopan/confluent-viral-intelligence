@@ -8,12 +8,14 @@ import (
 	"syscall"
 	"time"
 
+	"net/http"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/config"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/handlers"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/services"
+	"confluent-viral-intelligence/internal/config"
+	"confluent-viral-intelligence/internal/handlers"
+	"confluent-viral-intelligence/internal/services"
 )
 
 func main() {
@@ -57,7 +59,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create Kafka consumer: %v", err)
 	}
-	go consumer.Start(ctx)
+	if err := consumer.Start(); err != nil {
+		log.Fatalf("Failed to start Kafka consumer: %v", err)
+	}
 	defer consumer.Close()
 
 	// WebSocket hub
@@ -137,7 +141,7 @@ func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *
 		// Analytics
 		analytics := api.Group("/analytics")
 		{
-			h := handlers.NewAnalyticsHandler(processor)
+			h := handlers.NewAnalyticsHandler(processor.GetFirestoreClient())
 			analytics.GET("/trending", h.GetTrending)
 			analytics.GET("/post/:id/stats", h.GetPostStats)
 			analytics.GET("/user/:id/recommendations", h.GetRecommendations)
@@ -145,9 +149,8 @@ func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *
 	}
 
 	// WebSocket endpoint
-	router.GET("/ws", func(c *gin.Context) {
-		handlers.HandleWebSocket(wsHub, c.Writer, c.Request)
-	})
+	wsHandler := handlers.NewWebSocketHandler(wsHub)
+	router.GET("/ws", wsHandler.HandleWebSocket)
 
 	return router
 }

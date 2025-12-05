@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/config"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/models"
+	"confluent-viral-intelligence/internal/config"
+	"confluent-viral-intelligence/internal/models"
 )
 
 type EventProcessor struct {
@@ -22,6 +22,11 @@ func NewEventProcessor(producer *KafkaProducer, firestore *FirestoreClient, vert
 		vertexAI:  vertexAI,
 		config:    cfg,
 	}
+}
+
+// GetFirestoreClient returns the Firestore client
+func (ep *EventProcessor) GetFirestoreClient() *FirestoreClient {
+	return ep.firestore
 }
 
 // ProcessInteraction handles user interaction events

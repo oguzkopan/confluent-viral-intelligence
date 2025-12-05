@@ -5,36 +5,42 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/services"
+	"confluent-viral-intelligence/internal/services"
 )
 
 type AnalyticsHandler struct {
-	processor *services.EventProcessor
+	firestoreClient *services.FirestoreClient
 }
 
-func NewAnalyticsHandler(processor *services.EventProcessor) *AnalyticsHandler {
-	return &AnalyticsHandler{processor: processor}
+func NewAnalyticsHandler(firestoreClient *services.FirestoreClient) *AnalyticsHandler {
+	return &AnalyticsHandler{firestoreClient: firestoreClient}
 }
 
+// GetTrending returns the top trending posts
 func (h *AnalyticsHandler) GetTrending(c *gin.Context) {
+	// Parse limit parameter with default value of 20
 	limitStr := c.DefaultQuery("limit", "20")
 	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 20
+	if err != nil || limit <= 0 || limit > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter. Must be between 1 and 100"})
+		return
 	}
 
-	posts, err := h.processor.GetTrendingPosts(limit)
+	// Get trending posts from Firestore
+	trendingPosts, err := h.firestoreClient.GetTrendingPosts(limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"trending": posts,
-		"count":    len(posts),
+		"status": "success",
+		"count":  len(trendingPosts),
+		"data":   trendingPosts,
 	})
 }
 
+// GetPostStats returns statistics for a specific post
 func (h *AnalyticsHandler) GetPostStats(c *gin.Context) {
 	postID := c.Param("id")
 	if postID == "" {
@@ -42,15 +48,25 @@ func (h *AnalyticsHandler) GetPostStats(c *gin.Context) {
 		return
 	}
 
-	stats, err := h.processor.GetPostStats(postID)
+	// Get post stats from Firestore
+	stats, err := h.firestoreClient.GetPostStats(postID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post stats not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch post stats"})
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	if stats == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   stats,
+	})
 }
 
+// GetRecommendations returns personalized recommendations for a user
 func (h *AnalyticsHandler) GetRecommendations(c *gin.Context) {
 	userID := c.Param("id")
 	if userID == "" {
@@ -58,20 +74,24 @@ func (h *AnalyticsHandler) GetRecommendations(c *gin.Context) {
 		return
 	}
 
+	// Parse limit parameter with default value of 10
 	limitStr := c.DefaultQuery("limit", "10")
 	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
+	if err != nil || limit <= 0 || limit > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter. Must be between 1 and 50"})
+		return
 	}
 
-	recommendations, err := h.processor.GetUserRecommendations(userID, limit)
+	// Get user recommendations from Firestore
+	recommendations, err := h.firestoreClient.GetUserRecommendations(userID, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch recommendations"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"recommendations": recommendations,
-		"count":           len(recommendations),
+		"status": "success",
+		"count":  len(recommendations),
+		"data":   recommendations,
 	})
 }

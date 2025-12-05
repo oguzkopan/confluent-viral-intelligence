@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/config"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/models"
+	"confluent-viral-intelligence/internal/config"
+	"confluent-viral-intelligence/internal/models"
 	"google.golang.org/api/iterator"
 )
 

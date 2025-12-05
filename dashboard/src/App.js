@@ -71,14 +71,15 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/api/analytics/trending?limit=20`);
       const data = await response.json();
-      setTrendingPosts(data.trending || []);
+      const trending = data.data || data.trending || [];
+      setTrendingPosts(trending);
       
       // Update metrics
-      const viralCount = data.trending.filter(p => p.viral_probability > 0.7).length;
+      const viralCount = trending.filter(p => p.viral_probability > 0.7).length;
       setMetrics({
-        totalViews: data.trending.reduce((sum, p) => sum + p.view_count, 0),
-        totalInteractions: data.trending.reduce((sum, p) => 
-          sum + p.like_count + p.comment_count + p.share_count, 0),
+        totalViews: trending.reduce((sum, p) => sum + (p.view_count || 0), 0),
+        totalInteractions: trending.reduce((sum, p) => 
+          sum + (p.like_count || 0) + (p.comment_count || 0) + (p.share_count || 0), 0),
         viralPosts: viralCount
       });
     } catch (error) {

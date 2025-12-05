@@ -45,12 +45,12 @@ func Load() *Config {
 		ConfluentSASLMechanism:    getEnv("CONFLUENT_SASL_MECHANISM", "PLAIN"),
 
 		// Google Cloud
-		GoogleCloudProject: getEnv("GOOGLE_CLOUD_PROJECT", ""),
+		GoogleCloudProject: getEnv("GOOGLE_CLOUD_PROJECT", "yarimai"),
 		VertexAILocation:   getEnv("VERTEX_AI_LOCATION", "us-central1"),
 		VertexAIEndpointID: getEnv("VERTEX_AI_ENDPOINT_ID", ""),
 
 		// Firestore
-		FirestoreProjectID: getEnv("FIRESTORE_PROJECT_ID", ""),
+		FirestoreProjectID: getEnv("FIRESTORE_PROJECT_ID", "yarimai"),
 
 		// Server
 		Port:           getEnv("PORT", "8080"),

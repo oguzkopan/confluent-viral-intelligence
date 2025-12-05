@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/config"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/models"
+	"confluent-viral-intelligence/internal/config"
+	"confluent-viral-intelligence/internal/models"
 )
 
 type KafkaProducer struct {

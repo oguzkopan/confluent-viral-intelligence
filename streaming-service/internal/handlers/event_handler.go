@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/models"
-	"github.com/yourusername/hackathon-confluent-viral-intelligence/streaming-service/internal/services"
+	"confluent-viral-intelligence/internal/models"
+	"confluent-viral-intelligence/internal/services"
 )
 
 type EventHandler struct {
