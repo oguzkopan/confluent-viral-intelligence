@@ -41,6 +41,45 @@ func (ep *EventProcessor) ProcessInteraction(event models.InteractionEvent) erro
 	return nil
 }
 
+// ProcessInteractionForAnalytics updates analytics when consuming from Kafka
+func (ep *EventProcessor) ProcessInteractionForAnalytics(event models.InteractionEvent) {
+	// Update Firestore analytics based on interaction type
+	if err := ep.firestore.UpdatePostAnalytics(event.PostID, event.EventType); err != nil {
+		log.Printf("Failed to update analytics for interaction: %v", err)
+	}
+	log.Printf("Updated analytics for %s on post %s", event.EventType, event.PostID)
+}
+
+// ProcessViewForAnalytics updates analytics when consuming view events from Kafka
+func (ep *EventProcessor) ProcessViewForAnalytics(event models.ViewEvent) {
+	// Increment view count
+	if err := ep.firestore.IncrementViewCount(event.PostID); err != nil {
+		log.Printf("Failed to increment view count: %v", err)
+	}
+	
+	// Update trending score
+	if err := ep.firestore.UpdateTrendingScoreFromView(event.PostID); err != nil {
+		log.Printf("Failed to update trending score: %v", err)
+	}
+	
+	log.Printf("Updated analytics for view on post %s", event.PostID)
+}
+
+// ProcessRemixForAnalytics updates analytics when consuming remix events from Kafka
+func (ep *EventProcessor) ProcessRemixForAnalytics(event models.RemixEvent) {
+	// Track remix chain
+	if err := ep.firestore.TrackRemixChain(event.OriginalPostID, event.RemixPostID); err != nil {
+		log.Printf("Failed to track remix chain: %v", err)
+	}
+	
+	// Update trending score for original post
+	if err := ep.firestore.UpdateTrendingScoreFromRemix(event.OriginalPostID); err != nil {
+		log.Printf("Failed to update trending score: %v", err)
+	}
+	
+	log.Printf("Updated analytics for remix: %s -> %s", event.OriginalPostID, event.RemixPostID)
+}
+
 // ProcessContentMetadata handles content metadata and generates keywords
 func (ep *EventProcessor) ProcessContentMetadata(event models.ContentMetadata) error {
 	// Extract keywords using Vertex AI

@@ -49,8 +49,11 @@ func NewKafkaConsumer(cfg *config.Config, eventProcessor *EventProcessor) (*Kafk
 
 // Start begins consuming messages from subscribed topics
 func (kc *KafkaConsumer) Start() error {
-	// Subscribe to trending-scores and recommendations topics
+	// Subscribe to ALL event topics for real-time processing
 	topics := []string{
+		kc.config.TopicUserInteractions,
+		kc.config.TopicViewEvents,
+		kc.config.TopicRemixEvents,
 		kc.config.TopicTrendingScores,
 		kc.config.TopicRecommendations,
 	}
@@ -104,6 +107,12 @@ func (kc *KafkaConsumer) handleMessage(msg *kafka.Message) error {
 		topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
 	switch topic {
+	case kc.config.TopicUserInteractions:
+		return kc.handleUserInteraction(msg.Value)
+	case kc.config.TopicViewEvents:
+		return kc.handleViewEvent(msg.Value)
+	case kc.config.TopicRemixEvents:
+		return kc.handleRemixEvent(msg.Value)
 	case kc.config.TopicTrendingScores:
 		return kc.handleTrendingScore(msg.Value)
 	case kc.config.TopicRecommendations:
@@ -112,6 +121,45 @@ func (kc *KafkaConsumer) handleMessage(msg *kafka.Message) error {
 		log.Printf("Unknown topic: %s", topic)
 		return nil
 	}
+}
+
+// handleUserInteraction deserializes and processes a user interaction event
+func (kc *KafkaConsumer) handleUserInteraction(data []byte) error {
+	var event models.InteractionEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal interaction event: %w", err)
+	}
+
+	// Update analytics in Firestore
+	kc.eventProcessor.ProcessInteractionForAnalytics(event)
+	
+	return nil
+}
+
+// handleViewEvent deserializes and processes a view event
+func (kc *KafkaConsumer) handleViewEvent(data []byte) error {
+	var event models.ViewEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal view event: %w", err)
+	}
+
+	// Update analytics in Firestore
+	kc.eventProcessor.ProcessViewForAnalytics(event)
+	
+	return nil
+}
+
+// handleRemixEvent deserializes and processes a remix event
+func (kc *KafkaConsumer) handleRemixEvent(data []byte) error {
+	var event models.RemixEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal remix event: %w", err)
+	}
+
+	// Update analytics in Firestore
+	kc.eventProcessor.ProcessRemixForAnalytics(event)
+	
+	return nil
 }
 
 // handleTrendingScore deserializes and processes a trending score message
