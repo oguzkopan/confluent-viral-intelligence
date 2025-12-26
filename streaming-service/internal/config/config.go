@@ -55,7 +55,7 @@ func Load() *Config {
 		// Server
 		Port:           getEnv("PORT", "8080"),
 		Environment:    getEnv("ENVIRONMENT", "development"),
-		AllowedOrigins: strings.Split(getEnv("ALLOWED_ORIGINS", "*"), ","),
+		AllowedOrigins: parseAllowedOrigins(getEnv("ALLOWED_ORIGINS", "*")),
 
 		// Kafka Topics
 		TopicUserInteractions: getEnv("TOPIC_USER_INTERACTIONS", "user-interactions"),
@@ -72,4 +72,25 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// parseAllowedOrigins parses ALLOWED_ORIGINS supporting both comma and semicolon separators
+func parseAllowedOrigins(origins string) []string {
+	// Support both comma and semicolon as separators
+	// Replace semicolons with commas first
+	origins = strings.ReplaceAll(origins, ";", ",")
+	
+	// Split by comma
+	parts := strings.Split(origins, ",")
+	
+	// Trim whitespace from each origin
+	result := make([]string, 0, len(parts))
+	for _, origin := range parts {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	
+	return result
 }

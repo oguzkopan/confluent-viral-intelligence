@@ -68,8 +68,24 @@ func main() {
 	wsHub := services.NewWebSocketHub()
 	go wsHub.Run()
 
+	// Start trending updater (recalculates scores every 5 minutes)
+	trendingUpdater := services.NewTrendingUpdater(firestoreClient, 5*time.Minute)
+	trendingUpdater.Start()
+	defer trendingUpdater.Stop()
+
+	// Create post indexer for initial indexing
+	postIndexer := services.NewPostIndexer(firestoreClient)
+	
+	// Run initial indexing in background
+	go func() {
+		log.Println("🚀 Starting initial post indexing...")
+		if err := postIndexer.IndexAllPosts(); err != nil {
+			log.Printf("❌ Initial indexing failed: %v", err)
+		}
+	}()
+
 	// Setup HTTP server
-	router := setupRouter(cfg, eventProcessor, wsHub)
+	router := setupRouter(cfg, eventProcessor, wsHub, postIndexer)
 
 	// Start server
 	srv := &http.Server{
@@ -103,7 +119,7 @@ func main() {
 	log.Println("Server exited")
 }
 
-func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *services.WebSocketHub) *gin.Engine {
+func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *services.WebSocketHub, postIndexer *services.PostIndexer) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -145,6 +161,26 @@ func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *
 			analytics.GET("/trending", h.GetTrending)
 			analytics.GET("/post/:id/stats", h.GetPostStats)
 			analytics.GET("/user/:id/recommendations", h.GetRecommendations)
+			
+			// Dashboard analytics
+			analytics.GET("/dashboard/metrics", h.GetDashboardMetrics)
+			analytics.GET("/dashboard/top-creators", h.GetTopCreators)
+			analytics.GET("/dashboard/content-types", h.GetContentTypeBreakdown)
+			analytics.GET("/dashboard/trends", h.GetEngagementTrends)
+		}
+
+		// Admin operations
+		admin := api.Group("/admin")
+		{
+			// Trigger full post indexing
+			admin.POST("/index-posts", func(c *gin.Context) {
+				go func() {
+					if err := postIndexer.IndexAllPosts(); err != nil {
+						log.Printf("❌ Post indexing failed: %v", err)
+					}
+				}()
+				c.JSON(200, gin.H{"status": "indexing started"})
+			})
 		}
 	}
 

@@ -240,10 +240,24 @@ elif confirm "Deploy dashboard to Firebase Hosting?"; then
     
     # Update .env.production with service URL
     echo -e "${YELLOW}Updating dashboard configuration...${NC}"
+    
+    # Remove .env.local if it exists (it overrides production settings)
+    if [ -f ".env.local" ]; then
+        echo -e "${YELLOW}Removing .env.local (overrides production settings)...${NC}"
+        rm .env.local
+    fi
+    
     cat > .env.production << EOF
 REACT_APP_API_URL=${SERVICE_URL}
 REACT_APP_WS_URL=${SERVICE_URL/https/wss}/ws
 EOF
+    
+    # Also update the default URLs in App.js to use production
+    echo -e "${YELLOW}Updating App.js default URLs...${NC}"
+    sed -i.bak "s|http://localhost:8080|${SERVICE_URL}|g" src/App.js
+    sed -i.bak "s|ws://localhost:8080/ws|${SERVICE_URL/https/wss}/ws|g" src/App.js
+    rm -f src/App.js.bak
+    
     echo -e "${GREEN}✓ Dashboard configuration updated${NC}"
     
     # Install dependencies if needed

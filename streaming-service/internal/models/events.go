@@ -56,6 +56,13 @@ type TrendingScore struct {
 	EngagementVelocity float64  `json:"engagement_velocity"` // interactions per minute
 	CalculatedAt      time.Time `json:"calculated_at"`
 	TimeWindow        string    `json:"time_window"` // 1min, 5min, 1hour
+	
+	// Post content fields (enriched from posts collection)
+	ContentType   string   `json:"content_type,omitempty"`
+	OutputURLs    []string `json:"output_urls,omitempty"`
+	Title         string   `json:"title,omitempty"`
+	Description   string   `json:"description,omitempty"`
+	Instructions  string   `json:"instructions,omitempty"`
 }
 
 // Recommendation represents a personalized content recommendation

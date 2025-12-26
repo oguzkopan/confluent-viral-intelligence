@@ -61,7 +61,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --timeout 300s \
   --min-instances 1 \
   --max-instances 10 \
-  --set-env-vars "CONFLUENT_BOOTSTRAP_SERVERS=${CONFLUENT_BOOTSTRAP_SERVERS:-pkc-placeholder},CONFLUENT_API_KEY=${CONFLUENT_API_KEY:-U5AZXVJ2MO4TNZQO},CONFLUENT_API_SECRET=${CONFLUENT_API_SECRET:-placeholder},GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-yarimai},FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-yarimai},VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION:-us-central1},ENVIRONMENT=production,ALLOWED_ORIGINS=*" \
+  --set-env-vars "CONFLUENT_BOOTSTRAP_SERVERS=${CONFLUENT_BOOTSTRAP_SERVERS:-pkc-placeholder},CONFLUENT_API_KEY=${CONFLUENT_API_KEY:-U5AZXVJ2MO4TNZQO},CONFLUENT_API_SECRET=${CONFLUENT_API_SECRET:-placeholder},GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-yarimai},FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-yarimai},VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION:-us-central1},ENVIRONMENT=production,ALLOWED_ORIGINS=https://viral-intelligence-dashboard.web.app;https://viral-intelligence-dashboard.firebaseapp.com;https://yarimai.web.app;https://yarimai.firebaseapp.com" \
   --service-account "${SERVICE_ACCOUNT:-799474804867-compute@developer.gserviceaccount.com}"
 
 # Get the service URL

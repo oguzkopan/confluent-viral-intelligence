@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import PostCard from './components/PostCard';
 import MasonryGrid from './components/MasonryGrid';
-import RealTimeMetrics from './components/RealTimeMetrics';
+import EnhancedMetrics from './components/EnhancedMetrics';
 import WebSocketStatus from './components/WebSocketStatus';
 import { enrichTrendingPosts } from './services/firebase';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
+const API_URL = process.env.REACT_APP_API_URL || 'https://viral-intelligence-streaming-76fj3utobq-uc.a.run.app';
+const WS_URL = process.env.REACT_APP_WS_URL || 'wss://viral-intelligence-streaming-76fj3utobq-uc.a.run.app/ws';
 
 function App() {
   const [trendingPosts, setTrendingPosts] = useState([]);
   const [viralAlerts, setViralAlerts] = useState([]);
   const [wsConnected, setWsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardMetrics, setDashboardMetrics] = useState(null);
+  const [topCreators, setTopCreators] = useState([]);
   const [metrics, setMetrics] = useState({
     totalViews: 0,
     totalInteractions: 0,
@@ -64,9 +66,41 @@ function App() {
   // Fetch initial trending data
   useEffect(() => {
     fetchTrending();
-    const interval = setInterval(fetchTrending, 30000); // Refresh every 30s
+    fetchDashboardMetrics();
+    fetchTopCreators();
+    const interval = setInterval(() => {
+      fetchTrending();
+      fetchDashboardMetrics();
+      fetchTopCreators();
+    }, 30000); // Refresh every 30s
     return () => clearInterval(interval);
   }, []);
+
+  const fetchDashboardMetrics = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/dashboard/metrics`);
+      const data = await response.json();
+      if (data.status === 'success' && data.data) {
+        setDashboardMetrics(data.data);
+        console.log('📊 Dashboard metrics:', data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard metrics:', error);
+    }
+  };
+
+  const fetchTopCreators = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/dashboard/top-creators?limit=10`);
+      const data = await response.json();
+      if (data.status === 'success' && data.data) {
+        setTopCreators(data.data);
+        console.log('⭐ Top creators:', data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch top creators:', error);
+    }
+  };
 
   const fetchTrending = async () => {
     try {
@@ -111,7 +145,18 @@ function App() {
       </header>
 
       <main className="App-main">
-        <RealTimeMetrics metrics={metrics} />
+        {dashboardMetrics ? (
+          <EnhancedMetrics 
+            metrics={dashboardMetrics} 
+            topPosts={dashboardMetrics.topPosts || []}
+            topCreators={topCreators}
+          />
+        ) : (
+          <div className="loading-metrics">
+            <div className="spinner"></div>
+            <p>Loading metrics...</p>
+          </div>
+        )}
 
         {viralAlerts.length > 0 && (
           <div className="viral-alerts">
