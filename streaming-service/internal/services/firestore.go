@@ -308,15 +308,43 @@ func (fc *FirestoreClient) UpdateTrendingScoreFromRemix(postID string) error {
 	return err
 }
 
-// calculateScore calculates trending score based on engagement metrics
+// calculateScore calculates trending score based on engagement metrics with time decay
 func (fc *FirestoreClient) calculateScore(score models.TrendingScore) float64 {
+	// Calculate hours since the score was calculated (post age)
+	hoursSinceCalculation := time.Since(score.CalculatedAt).Hours()
+	
+	// Avoid division by zero for very new posts
+	if hoursSinceCalculation < 0.1 {
+		hoursSinceCalculation = 0.1
+	}
+	
 	// Weighted scoring algorithm
 	// Views: 0.1, Likes: 1.0, Comments: 2.0, Shares: 3.0, Remixes: 5.0
-	return float64(score.ViewCount)*0.1 +
+	baseScore := float64(score.ViewCount)*0.1 +
 		float64(score.LikeCount)*1.0 +
 		float64(score.CommentCount)*2.0 +
 		float64(score.ShareCount)*3.0 +
 		float64(score.RemixCount)*5.0
+	
+	// Calculate engagement velocity (engagement per hour)
+	totalEngagement := float64(score.LikeCount + score.CommentCount + score.ShareCount + score.RemixCount)
+	engagementVelocity := totalEngagement / hoursSinceCalculation
+	
+	// Apply time decay factor (exponential decay)
+	// λ = 0.02 gives half-life of ~35 hours
+	lambda := 0.02
+	timeDecayFactor := 1.0 / (1.0 + lambda*hoursSinceCalculation)
+	
+	// Recency bonus for new posts (last 24 hours)
+	recencyBonus := 0.0
+	if hoursSinceCalculation < 24 {
+		recencyBonus = 10.0 * (1.0 - hoursSinceCalculation/24.0)
+	}
+	
+	// Calculate final trending score with time decay and velocity
+	trendingScore := (baseScore * timeDecayFactor) + (engagementVelocity * 5.0) + recencyBonus
+	
+	return trendingScore
 }
 
 func (fc *FirestoreClient) Close() error {

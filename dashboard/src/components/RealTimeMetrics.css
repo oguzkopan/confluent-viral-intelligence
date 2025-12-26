@@ -1,46 +1,87 @@
 .metrics-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 48px;
 }
 
 .metric-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  gap: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-small);
 }
 
 .metric-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-medium);
+  border-color: var(--primary-color);
 }
 
 .metric-card.viral {
-  background: rgba(255, 107, 107, 0.2);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.metric-card.viral:hover {
+  border-color: #ef4444;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
 }
 
 .metric-icon {
-  font-size: 2.5rem;
+  font-size: 48px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .metric-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .metric-value {
   font-size: 2rem;
-  font-weight: bold;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
   line-height: 1;
-  margin-bottom: 0.25rem;
 }
 
 .metric-label {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+  .metrics-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .metric-card {
+    padding: 20px;
+  }
+
+  .metric-icon {
+    font-size: 40px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .metric-label {
+    font-size: 0.8125rem;
+  }
 }
