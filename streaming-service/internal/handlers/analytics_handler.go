@@ -30,16 +30,41 @@ func (h *AnalyticsHandler) GetTrending(c *gin.Context) {
 		return
 	}
 
-	// Use dashboard analytics to get posts with content (same filtering logic as top 3)
-	trendingPosts, err := h.dashboardAnalytics.GetTrendingPostsWithContent(limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
-		return
+	// Check if content type filter is provided
+	contentType := c.Query("contentType")
+	
+	var trendingPosts []interface{}
+	var count int
+	
+	if contentType != "" {
+		// Filter by content type
+		posts, err := h.dashboardAnalytics.GetTrendingPostsByContentType(contentType, limit)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
+			return
+		}
+		count = len(posts)
+		trendingPosts = make([]interface{}, len(posts))
+		for i, post := range posts {
+			trendingPosts[i] = post
+		}
+	} else {
+		// Use dashboard analytics to get posts with content (same filtering logic as top 3)
+		posts, err := h.dashboardAnalytics.GetTrendingPostsWithContent(limit)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
+			return
+		}
+		count = len(posts)
+		trendingPosts = make([]interface{}, len(posts))
+		for i, post := range posts {
+			trendingPosts[i] = post
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
-		"count":  len(trendingPosts),
+		"count":  count,
 		"data":   trendingPosts,
 	})
 }

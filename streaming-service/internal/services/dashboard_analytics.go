@@ -547,6 +547,100 @@ func (da *DashboardAnalytics) GetTrendingPostsWithContent(limit int) ([]models.T
 	return enrichedPosts, nil
 }
 
+// GetTrendingPostsByContentType returns trending posts filtered by content type
+func (da *DashboardAnalytics) GetTrendingPostsByContentType(contentType string, limit int) ([]models.TrendingScore, error) {
+	log.Printf("📊 Getting trending posts for content type '%s' (limit: %d)...", contentType, limit)
+	
+	// Get all trending scores
+	iter := da.firestoreClient.client.Collection("trending_scores").Documents(da.ctx)
+	
+	var allScores []models.TrendingScore
+	
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Printf("❌ Error fetching trending score: %v", err)
+			continue
+		}
+		
+		var score models.TrendingScore
+		if err := doc.DataTo(&score); err != nil {
+			continue
+		}
+		
+		allScores = append(allScores, score)
+	}
+	
+	// Sort by score
+	sort.Slice(allScores, func(i, j int) bool {
+		return allScores[i].Score > allScores[j].Score
+	})
+	
+	// Enrich posts with actual post data and filter by content type
+	enrichedPosts := []models.TrendingScore{}
+	
+	for _, score := range allScores {
+		// Skip if we already have enough posts
+		if len(enrichedPosts) >= limit {
+			break
+		}
+		
+		// Get post details
+		postDoc, err := da.firestoreClient.client.Collection("posts").Doc(score.PostID).Get(da.ctx)
+		if err != nil {
+			log.Printf("⚠️ Failed to get post %s: %v (skipping)", score.PostID, err)
+			continue
+		}
+		
+		var postData map[string]interface{}
+		if err := postDoc.DataTo(&postData); err != nil {
+			log.Printf("⚠️ Failed to parse post %s: %v (skipping)", score.PostID, err)
+			continue
+		}
+		
+		// Add post data to the score
+		if ct, ok := postData["contentType"].(string); ok {
+			score.ContentType = ct
+		}
+		
+		// Skip if content type doesn't match
+		if score.ContentType != contentType {
+			continue
+		}
+		
+		if outputUrls, ok := postData["outputUrls"].([]interface{}); ok && len(outputUrls) > 0 {
+			urls := make([]string, 0, len(outputUrls))
+			for _, url := range outputUrls {
+				if urlStr, ok := url.(string); ok {
+					urls = append(urls, urlStr)
+				}
+			}
+			score.OutputURLs = urls
+		}
+		if title, ok := postData["title"].(string); ok {
+			score.Title = title
+		}
+		if description, ok := postData["description"].(string); ok {
+			score.Description = description
+		}
+		if instructions, ok := postData["instructions"].(string); ok {
+			score.Instructions = instructions
+		}
+		
+		// Only add posts that have actual content
+		if len(score.OutputURLs) > 0 {
+			enrichedPosts = append(enrichedPosts, score)
+			log.Printf("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
+		}
+	}
+	
+	log.Printf("📊 Trending posts for type '%s': %d", contentType, len(enrichedPosts))
+	return enrichedPosts, nil
+}
+
 // EngagementTrend represents engagement metrics for a specific day
 type EngagementTrend struct {
 	Date      time.Time `json:"date"`
