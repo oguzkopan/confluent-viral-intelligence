@@ -2,7 +2,7 @@ package services
 
 import (
 	"encoding/json"
-	"log"
+	"confluent-viral-intelligence/internal/logger"
 	"sync"
 	"time"
 
@@ -93,14 +93,14 @@ func (h *WebSocketHub) Run() {
 			h.mu.Lock()
 			h.clients[client] = true
 			h.mu.Unlock()
-			log.Printf("WebSocket client registered. Total clients: %d", len(h.clients))
+			logger.Infof("WebSocket client registered. Total clients: %d", len(h.clients))
 
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
-				log.Printf("WebSocket client unregistered. Total clients: %d", len(h.clients))
+				logger.Infof("WebSocket client unregistered. Total clients: %d", len(h.clients))
 			}
 			h.mu.Unlock()
 
@@ -137,12 +137,12 @@ func (h *WebSocketHub) BroadcastTrendingUpdate(postID string, score float64, vie
 
 	data, err := json.Marshal(message)
 	if err != nil {
-		log.Printf("Error marshaling trending update: %v", err)
+		logger.Infof("Error marshaling trending update: %v", err)
 		return
 	}
 
 	h.broadcast <- data
-	log.Printf("Broadcasted trending update for post %s (score: %.2f)", postID, score)
+	logger.Infof("Broadcasted trending update for post %s (score: %.2f)", postID, score)
 }
 
 // BroadcastViralAlert sends a viral alert to all connected clients
@@ -158,12 +158,12 @@ func (h *WebSocketHub) BroadcastViralAlert(postID string, viralProbability, scor
 
 	data, err := json.Marshal(message)
 	if err != nil {
-		log.Printf("Error marshaling viral alert: %v", err)
+		logger.Infof("Error marshaling viral alert: %v", err)
 		return
 	}
 
 	h.broadcast <- data
-	log.Printf("Broadcasted viral alert for post %s (probability: %.2f%%)", postID, viralProbability*100)
+	logger.Infof("Broadcasted viral alert for post %s (probability: %.2f%%)", postID, viralProbability*100)
 }
 
 // GetClientCount returns the number of connected clients
@@ -205,13 +205,13 @@ func (c *WebSocketClient) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error: %v", err)
+				logger.Infof("WebSocket error: %v", err)
 			}
 			break
 		}
 
 		// Log received message (for debugging)
-		log.Printf("Received message from client: %s", message)
+		logger.Infof("Received message from client: %s", message)
 	}
 }
 

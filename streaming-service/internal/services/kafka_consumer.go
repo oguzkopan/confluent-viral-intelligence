@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"confluent-viral-intelligence/internal/logger"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -63,7 +63,7 @@ func (kc *KafkaConsumer) Start() error {
 		return fmt.Errorf("failed to subscribe to topics: %w", err)
 	}
 
-	log.Printf("Kafka consumer subscribed to topics: %v", topics)
+	logger.Infof("Kafka consumer subscribed to topics: %v", topics)
 
 	// Start message processing loop
 	go kc.processMessages()
@@ -73,12 +73,12 @@ func (kc *KafkaConsumer) Start() error {
 
 // processMessages is the main message processing loop
 func (kc *KafkaConsumer) processMessages() {
-	log.Println("Starting Kafka consumer message processing loop")
+	logger.Info("Starting Kafka consumer message processing loop")
 
 	for {
 		select {
 		case <-kc.ctx.Done():
-			log.Println("Kafka consumer shutting down")
+			logger.Info("Kafka consumer shutting down")
 			return
 		default:
 			msg, err := kc.consumer.ReadMessage(100 * time.Millisecond)
@@ -87,13 +87,13 @@ func (kc *KafkaConsumer) processMessages() {
 				if err.(kafka.Error).Code() == kafka.ErrTimedOut {
 					continue
 				}
-				log.Printf("Consumer error: %v", err)
+				logger.Infof("Consumer error: %v", err)
 				continue
 			}
 
 			// Process the message
 			if err := kc.handleMessage(msg); err != nil {
-				log.Printf("Failed to handle message from topic %s: %v", *msg.TopicPartition.Topic, err)
+				logger.Infof("Failed to handle message from topic %s: %v", *msg.TopicPartition.Topic, err)
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (kc *KafkaConsumer) processMessages() {
 func (kc *KafkaConsumer) handleMessage(msg *kafka.Message) error {
 	topic := *msg.TopicPartition.Topic
 	
-	log.Printf("Received message from topic %s, partition %d, offset %d",
+	logger.Infof("Received message from topic %s, partition %d, offset %d",
 		topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
 	switch topic {
@@ -118,7 +118,7 @@ func (kc *KafkaConsumer) handleMessage(msg *kafka.Message) error {
 	case kc.config.TopicRecommendations:
 		return kc.handleRecommendation(msg.Value)
 	default:
-		log.Printf("Unknown topic: %s", topic)
+		logger.Infof("Unknown topic: %s", topic)
 		return nil
 	}
 }
@@ -190,7 +190,7 @@ func (kc *KafkaConsumer) handleRecommendation(data []byte) error {
 
 // Close gracefully shuts down the consumer
 func (kc *KafkaConsumer) Close() error {
-	log.Println("Closing Kafka consumer")
+	logger.Info("Closing Kafka consumer")
 	kc.cancel()
 	return kc.consumer.Close()
 }

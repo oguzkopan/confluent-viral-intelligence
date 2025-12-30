@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"log"
+	"confluent-viral-intelligence/internal/logger"
 	"time"
 
 	"confluent-viral-intelligence/internal/models"
@@ -26,7 +26,7 @@ func NewPostIndexer(firestoreClient *FirestoreClient) *PostIndexer {
 // IndexAllPosts indexes all posts from the posts collection into trending_scores
 func (pi *PostIndexer) IndexAllPosts() error {
 	startTime := time.Now()
-	log.Println("📊 Starting full post indexing...")
+	logger.Debug("📊 Starting full post indexing...")
 	
 	// Get all posts
 	iter := pi.firestoreClient.client.Collection("posts").Documents(pi.ctx)
@@ -41,14 +41,14 @@ func (pi *PostIndexer) IndexAllPosts() error {
 			break
 		}
 		if err != nil {
-			log.Printf("❌ Error fetching post: %v", err)
+			logger.Debugf(" Error fetching post: %v", err)
 			errorCount++
 			continue
 		}
 		
 		var postData map[string]interface{}
 		if err := doc.DataTo(&postData); err != nil {
-			log.Printf("❌ Error parsing post %s: %v", doc.Ref.ID, err)
+			logger.Debugf(" Error parsing post %s: %v", doc.Ref.ID, err)
 			errorCount++
 			continue
 		}
@@ -60,7 +60,7 @@ func (pi *PostIndexer) IndexAllPosts() error {
 		if err == nil && existingScore != nil {
 			// Update existing score with latest post data
 			if err := pi.updateTrendingScoreFromPost(postID, postData, existingScore); err != nil {
-				log.Printf("❌ Failed to update trending score for %s: %v", postID, err)
+				logger.Debugf(" Failed to update trending score for %s: %v", postID, err)
 				errorCount++
 			} else {
 				updatedCount++
@@ -70,7 +70,7 @@ func (pi *PostIndexer) IndexAllPosts() error {
 		
 		// Create new trending score
 		if err := pi.createTrendingScoreFromPost(postID, postData); err != nil {
-			log.Printf("❌ Failed to create trending score for %s: %v", postID, err)
+			logger.Debugf(" Failed to create trending score for %s: %v", postID, err)
 			errorCount++
 		} else {
 			indexedCount++
@@ -78,7 +78,7 @@ func (pi *PostIndexer) IndexAllPosts() error {
 	}
 	
 	duration := time.Since(startTime)
-	log.Printf("✅ Post indexing complete: indexed=%d, updated=%d, errors=%d, duration=%v", 
+	logger.Infof("✅ Post indexing complete: indexed=%d, updated=%d, errors=%d, duration=%v", 
 		indexedCount, updatedCount, errorCount, duration)
 	
 	return nil

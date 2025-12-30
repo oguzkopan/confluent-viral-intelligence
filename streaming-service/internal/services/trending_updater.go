@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"confluent-viral-intelligence/internal/logger"
 	"confluent-viral-intelligence/internal/models"
 	"google.golang.org/api/iterator"
 )
@@ -31,7 +31,7 @@ func NewTrendingUpdater(firestoreClient *FirestoreClient, updateInterval time.Du
 
 // Start begins the periodic update loop
 func (tu *TrendingUpdater) Start() {
-	log.Printf("🔄 Starting trending updater with interval: %v", tu.updateInterval)
+	logger.Infof("🔄 Starting trending updater with interval: %v", tu.updateInterval)
 	
 	// Run immediately on start
 	tu.updateAllTrendingScores()
@@ -43,7 +43,7 @@ func (tu *TrendingUpdater) Start() {
 			select {
 			case <-tu.ctx.Done():
 				ticker.Stop()
-				log.Println("🛑 Trending updater stopped")
+				logger.Info("🛑 Trending updater stopped")
 				return
 			case <-ticker.C:
 				tu.updateAllTrendingScores()
@@ -60,7 +60,7 @@ func (tu *TrendingUpdater) Stop() {
 // updateAllTrendingScores recalculates all trending scores with current time decay
 func (tu *TrendingUpdater) updateAllTrendingScores() {
 	startTime := time.Now()
-	log.Println("🔄 Starting trending scores update...")
+	logger.Debug("🔄 Starting trending scores update...")
 	
 	// Get all trending scores
 	iter := tu.firestoreClient.client.Collection("trending_scores").Documents(tu.ctx)
@@ -74,14 +74,14 @@ func (tu *TrendingUpdater) updateAllTrendingScores() {
 			break
 		}
 		if err != nil {
-			log.Printf("❌ Error fetching trending score: %v", err)
+			// Silently skip errors to avoid log spam
 			errorCount++
 			continue
 		}
 		
 		var score models.TrendingScore
 		if err := doc.DataTo(&score); err != nil {
-			log.Printf("❌ Error parsing trending score %s: %v", doc.Ref.ID, err)
+			// Silently skip parsing errors
 			errorCount++
 			continue
 		}
@@ -96,7 +96,7 @@ func (tu *TrendingUpdater) updateAllTrendingScores() {
 			
 			// Update in Firestore
 			if err := tu.firestoreClient.SaveTrendingScore(score); err != nil {
-				log.Printf("❌ Failed to update trending score for %s: %v", score.PostID, err)
+				// Silently skip save errors
 				errorCount++
 			} else {
 				updatedCount++
@@ -105,8 +105,11 @@ func (tu *TrendingUpdater) updateAllTrendingScores() {
 	}
 	
 	duration := time.Since(startTime)
-	log.Printf("✅ Trending scores update complete: updated=%d, errors=%d, duration=%v", 
-		updatedCount, errorCount, duration)
+	// Only log summary at info level if there were updates or errors
+	if updatedCount > 0 || errorCount > 0 {
+		logger.Infof("✅ Trending scores update complete: updated=%d, errors=%d, duration=%v", 
+			updatedCount, errorCount, duration)
+	}
 }
 
 // calculateDynamicScore calculates trending score with time decay based on post creation time

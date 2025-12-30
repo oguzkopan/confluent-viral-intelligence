@@ -15,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	"confluent-viral-intelligence/internal/config"
 	"confluent-viral-intelligence/internal/handlers"
+	"confluent-viral-intelligence/internal/logger"
 	"confluent-viral-intelligence/internal/services"
 )
 
@@ -23,6 +24,9 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
+
+	// Initialize logger
+	logger.Init()
 
 	// Load configuration
 	cfg := config.Load()
@@ -33,21 +37,21 @@ func main() {
 	// Kafka producer
 	producer, err := services.NewKafkaProducer(cfg)
 	if err != nil {
-		log.Fatalf("Failed to create Kafka producer: %v", err)
+		logger.Fatalf("Failed to create Kafka producer: %v", err)
 	}
 	defer producer.Close()
 
 	// Firestore client
 	firestoreClient, err := services.NewFirestoreClient(ctx, cfg)
 	if err != nil {
-		log.Fatalf("Failed to create Firestore client: %v", err)
+		logger.Fatalf("Failed to create Firestore client: %v", err)
 	}
 	defer firestoreClient.Close()
 
 	// Vertex AI client
 	vertexAI, err := services.NewVertexAIClient(ctx, cfg)
 	if err != nil {
-		log.Fatalf("Failed to create Vertex AI client: %v", err)
+		logger.Fatalf("Failed to create Vertex AI client: %v", err)
 	}
 	defer vertexAI.Close()
 
@@ -57,10 +61,10 @@ func main() {
 	// Start Kafka consumer in background
 	consumer, err := services.NewKafkaConsumer(cfg, eventProcessor)
 	if err != nil {
-		log.Fatalf("Failed to create Kafka consumer: %v", err)
+		logger.Fatalf("Failed to create Kafka consumer: %v", err)
 	}
 	if err := consumer.Start(); err != nil {
-		log.Fatalf("Failed to start Kafka consumer: %v", err)
+		logger.Fatalf("Failed to start Kafka consumer: %v", err)
 	}
 	defer consumer.Close()
 
@@ -78,9 +82,9 @@ func main() {
 	
 	// Run initial indexing in background
 	go func() {
-		log.Println("🚀 Starting initial post indexing...")
+		logger.Info("🚀 Starting initial post indexing...")
 		if err := postIndexer.IndexAllPosts(); err != nil {
-			log.Printf("❌ Initial indexing failed: %v", err)
+			logger.Errorf("❌ Initial indexing failed: %v", err)
 		}
 	}()
 
@@ -96,27 +100,27 @@ func main() {
 	// Graceful shutdown
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
-	log.Printf("Server started on port %s", cfg.Port)
+	logger.Infof("Server started on port %s", cfg.Port)
 
 	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+		logger.Fatal("Server forced to shutdown:" + err.Error())
 	}
 
-	log.Println("Server exited")
+	logger.Info("Server exited")
 }
 
 func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *services.WebSocketHub, postIndexer *services.PostIndexer) *gin.Engine {
@@ -176,7 +180,7 @@ func setupRouter(cfg *config.Config, processor *services.EventProcessor, wsHub *
 			admin.POST("/index-posts", func(c *gin.Context) {
 				go func() {
 					if err := postIndexer.IndexAllPosts(); err != nil {
-						log.Printf("❌ Post indexing failed: %v", err)
+						logger.Errorf("❌ Post indexing failed: %v", err)
 					}
 				}()
 				c.JSON(200, gin.H{"status": "indexing started"})

@@ -2,10 +2,10 @@ package services
 
 import (
 	"context"
-	"log"
 	"sort"
 	"time"
 
+	"confluent-viral-intelligence/internal/logger"
 	"confluent-viral-intelligence/internal/models"
 	"google.golang.org/api/iterator"
 )
@@ -59,7 +59,7 @@ type CreatorMetrics struct {
 
 // GetDashboardMetrics returns comprehensive metrics for the dashboard
 func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
-	log.Println("📊 Calculating dashboard metrics...")
+	logger.Debug("📊 Calculating dashboard metrics...")
 	
 	metrics := &DashboardMetrics{
 		TopContentTypes: make(map[string]int),
@@ -79,9 +79,7 @@ func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
 		if err == iterator.Done {
 			break
 		}
-		if err != nil {
-			log.Printf("❌ Error fetching trending score: %v", err)
-			continue
+		if err != nil {			continue
 		}
 		
 		var score models.TrendingScore
@@ -130,15 +128,11 @@ func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
 		
 		// Get post details
 		postDoc, err := da.firestoreClient.client.Collection("posts").Doc(score.PostID).Get(da.ctx)
-		if err != nil {
-			log.Printf("⚠️ Failed to get post %s: %v (skipping)", score.PostID, err)
-			continue // Skip posts that don't exist in posts collection
+		if err != nil {			continue // Skip posts that don't exist in posts collection
 		}
 		
 		var postData map[string]interface{}
-		if err := postDoc.DataTo(&postData); err != nil {
-			log.Printf("⚠️ Failed to parse post %s: %v (skipping)", score.PostID, err)
-			continue
+		if err := postDoc.DataTo(&postData); err != nil {			continue
 		}
 		
 		// Add post data to the score
@@ -167,14 +161,14 @@ func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
 		// Only add posts that have actual content
 		if score.ContentType != "" && len(score.OutputURLs) > 0 {
 			enrichedPosts = append(enrichedPosts, score)
-			log.Printf("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
+			logger.Infof("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
 		} else {
-			log.Printf("⚠️ Skipping post %s: no content (type=%s, urls=%d)", score.PostID, score.ContentType, len(score.OutputURLs))
+			logger.Debugf(" Skipping post %s: no content (type=%s, urls=%d)", score.PostID, score.ContentType, len(score.OutputURLs))
 		}
 	}
 	
 	metrics.TopPosts = enrichedPosts
-	log.Printf("📊 Top posts with content: %d", len(enrichedPosts))
+	logger.Debugf("📊 Top posts with content: %d", len(enrichedPosts))
 	
 	// Get content type distribution and active users
 	contentTypes := make(map[string]int)
@@ -206,7 +200,7 @@ func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
 	metrics.TopContentTypes = contentTypes
 	metrics.ActiveUsers = len(activeUsers)
 	
-	log.Printf("✅ Dashboard metrics calculated: posts=%d, views=%d, interactions=%d, viral=%d",
+	logger.Infof("✅ Dashboard metrics calculated: posts=%d, views=%d, interactions=%d, viral=%d",
 		metrics.TotalPosts, metrics.TotalViews, metrics.TotalInteractions, metrics.ViralPosts)
 	
 	return metrics, nil
@@ -214,7 +208,7 @@ func (da *DashboardAnalytics) GetDashboardMetrics() (*DashboardMetrics, error) {
 
 // GetTopCreators returns the top creators based on their content performance
 func (da *DashboardAnalytics) GetTopCreators(limit int) ([]CreatorMetrics, error) {
-	log.Printf("📊 Calculating top %d creators...", limit)
+	logger.Debugf("📊 Calculating top %d creators...", limit)
 	
 	// Get all trending scores
 	iter := da.firestoreClient.client.Collection("trending_scores").Documents(da.ctx)
@@ -278,9 +272,7 @@ func (da *DashboardAnalytics) GetTopCreators(limit int) ([]CreatorMetrics, error
 	for userID, creator := range creatorMap {
 		// Get user details
 		userDoc, err := da.firestoreClient.client.Collection("users").Doc(userID).Get(da.ctx)
-		if err != nil {
-			log.Printf("⚠️ Failed to get user %s: %v", userID, err)
-			continue
+		if err != nil {			continue
 		}
 		
 		var userData map[string]interface{}
@@ -324,13 +316,13 @@ func (da *DashboardAnalytics) GetTopCreators(limit int) ([]CreatorMetrics, error
 		creators = creators[:limit]
 	}
 	
-	log.Printf("✅ Top creators calculated: %d creators", len(creators))
+	logger.Infof("✅ Top creators calculated: %d creators", len(creators))
 	return creators, nil
 }
 
 // GetContentTypeBreakdown returns breakdown of content by type
 func (da *DashboardAnalytics) GetContentTypeBreakdown() (map[string]ContentTypeMetrics, error) {
-	log.Println("📊 Calculating content type breakdown...")
+	logger.Debug("📊 Calculating content type breakdown...")
 	
 	breakdown := make(map[string]ContentTypeMetrics)
 	
@@ -382,7 +374,7 @@ func (da *DashboardAnalytics) GetContentTypeBreakdown() (map[string]ContentTypeM
 		breakdown[contentType] = metrics
 	}
 	
-	log.Printf("✅ Content type breakdown calculated: %d types", len(breakdown))
+	logger.Infof("✅ Content type breakdown calculated: %d types", len(breakdown))
 	return breakdown, nil
 }
 
@@ -398,7 +390,7 @@ type ContentTypeMetrics struct {
 
 // GetEngagementTrends returns engagement trends over time
 func (da *DashboardAnalytics) GetEngagementTrends(days int) ([]EngagementTrend, error) {
-	log.Printf("📊 Calculating engagement trends for last %d days...", days)
+	logger.Debugf("📊 Calculating engagement trends for last %d days...", days)
 	
 	trends := make([]EngagementTrend, 0, days)
 	
@@ -453,13 +445,13 @@ func (da *DashboardAnalytics) GetEngagementTrends(days int) ([]EngagementTrend, 
 		trends[i], trends[j] = trends[j], trends[i]
 	}
 	
-	log.Printf("✅ Engagement trends calculated: %d days", len(trends))
+	logger.Infof("✅ Engagement trends calculated: %d days", len(trends))
 	return trends, nil
 }
 
 // GetTrendingPostsWithContent returns trending posts that have actual content (for trending feed)
 func (da *DashboardAnalytics) GetTrendingPostsWithContent(limit int) ([]models.TrendingScore, error) {
-	log.Printf("📊 Getting trending posts with content (limit: %d)...", limit)
+	logger.Debugf("📊 Getting trending posts with content (limit: %d)...", limit)
 	
 	// Get all trending scores
 	iter := da.firestoreClient.client.Collection("trending_scores").Documents(da.ctx)
@@ -471,9 +463,7 @@ func (da *DashboardAnalytics) GetTrendingPostsWithContent(limit int) ([]models.T
 		if err == iterator.Done {
 			break
 		}
-		if err != nil {
-			log.Printf("❌ Error fetching trending score: %v", err)
-			continue
+		if err != nil {			continue
 		}
 		
 		var score models.TrendingScore
@@ -500,15 +490,11 @@ func (da *DashboardAnalytics) GetTrendingPostsWithContent(limit int) ([]models.T
 		
 		// Get post details
 		postDoc, err := da.firestoreClient.client.Collection("posts").Doc(score.PostID).Get(da.ctx)
-		if err != nil {
-			log.Printf("⚠️ Failed to get post %s: %v (skipping)", score.PostID, err)
-			continue // Skip posts that don't exist in posts collection
+		if err != nil {			continue // Skip posts that don't exist in posts collection
 		}
 		
 		var postData map[string]interface{}
-		if err := postDoc.DataTo(&postData); err != nil {
-			log.Printf("⚠️ Failed to parse post %s: %v (skipping)", score.PostID, err)
-			continue
+		if err := postDoc.DataTo(&postData); err != nil {			continue
 		}
 		
 		// Add post data to the score
@@ -537,19 +523,19 @@ func (da *DashboardAnalytics) GetTrendingPostsWithContent(limit int) ([]models.T
 		// Only add posts that have actual content
 		if score.ContentType != "" && len(score.OutputURLs) > 0 {
 			enrichedPosts = append(enrichedPosts, score)
-			log.Printf("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
+			logger.Infof("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
 		} else {
-			log.Printf("⚠️ Skipping post %s: no content (type=%s, urls=%d)", score.PostID, score.ContentType, len(score.OutputURLs))
+			logger.Debugf(" Skipping post %s: no content (type=%s, urls=%d)", score.PostID, score.ContentType, len(score.OutputURLs))
 		}
 	}
 	
-	log.Printf("📊 Trending posts with content: %d", len(enrichedPosts))
+	logger.Debugf("📊 Trending posts with content: %d", len(enrichedPosts))
 	return enrichedPosts, nil
 }
 
 // GetTrendingPostsByContentType returns trending posts filtered by content type
 func (da *DashboardAnalytics) GetTrendingPostsByContentType(contentType string, limit int) ([]models.TrendingScore, error) {
-	log.Printf("📊 Getting trending posts for content type '%s' (limit: %d)...", contentType, limit)
+	logger.Debugf("📊 Getting trending posts for content type '%s' (limit: %d)...", contentType, limit)
 	
 	// Get all trending scores
 	iter := da.firestoreClient.client.Collection("trending_scores").Documents(da.ctx)
@@ -561,9 +547,7 @@ func (da *DashboardAnalytics) GetTrendingPostsByContentType(contentType string, 
 		if err == iterator.Done {
 			break
 		}
-		if err != nil {
-			log.Printf("❌ Error fetching trending score: %v", err)
-			continue
+		if err != nil {			continue
 		}
 		
 		var score models.TrendingScore
@@ -590,15 +574,11 @@ func (da *DashboardAnalytics) GetTrendingPostsByContentType(contentType string, 
 		
 		// Get post details
 		postDoc, err := da.firestoreClient.client.Collection("posts").Doc(score.PostID).Get(da.ctx)
-		if err != nil {
-			log.Printf("⚠️ Failed to get post %s: %v (skipping)", score.PostID, err)
-			continue
+		if err != nil {			continue
 		}
 		
 		var postData map[string]interface{}
-		if err := postDoc.DataTo(&postData); err != nil {
-			log.Printf("⚠️ Failed to parse post %s: %v (skipping)", score.PostID, err)
-			continue
+		if err := postDoc.DataTo(&postData); err != nil {			continue
 		}
 		
 		// Add post data to the score
@@ -633,11 +613,11 @@ func (da *DashboardAnalytics) GetTrendingPostsByContentType(contentType string, 
 		// Only add posts that have actual content
 		if len(score.OutputURLs) > 0 {
 			enrichedPosts = append(enrichedPosts, score)
-			log.Printf("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
+			logger.Infof("✅ Enriched post %s: type=%s, urls=%d", score.PostID, score.ContentType, len(score.OutputURLs))
 		}
 	}
 	
-	log.Printf("📊 Trending posts for type '%s': %d", contentType, len(enrichedPosts))
+	logger.Debugf("📊 Trending posts for type '%s': %d", contentType, len(enrichedPosts))
 	return enrichedPosts, nil
 }
 

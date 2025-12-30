@@ -1,7 +1,7 @@
 package services
 
 import (
-	"log"
+	"confluent-viral-intelligence/internal/logger"
 	"time"
 
 	"confluent-viral-intelligence/internal/config"
@@ -33,11 +33,11 @@ func (ep *EventProcessor) GetFirestoreClient() *FirestoreClient {
 func (ep *EventProcessor) ProcessInteraction(event models.InteractionEvent) error {
 	// Publish to Kafka
 	if err := ep.producer.PublishInteraction(event); err != nil {
-		log.Printf("Failed to publish interaction: %v", err)
+		logger.Infof("Failed to publish interaction: %v", err)
 		return err
 	}
 
-	log.Printf("Processed interaction: %s on post %s", event.EventType, event.PostID)
+	logger.Infof("Processed interaction: %s on post %s", event.EventType, event.PostID)
 	return nil
 }
 
@@ -45,39 +45,39 @@ func (ep *EventProcessor) ProcessInteraction(event models.InteractionEvent) erro
 func (ep *EventProcessor) ProcessInteractionForAnalytics(event models.InteractionEvent) {
 	// Update Firestore analytics based on interaction type
 	if err := ep.firestore.UpdatePostAnalytics(event.PostID, event.EventType); err != nil {
-		log.Printf("Failed to update analytics for interaction: %v", err)
+		logger.Infof("Failed to update analytics for interaction: %v", err)
 	}
-	log.Printf("Updated analytics for %s on post %s", event.EventType, event.PostID)
+	logger.Infof("Updated analytics for %s on post %s", event.EventType, event.PostID)
 }
 
 // ProcessViewForAnalytics updates analytics when consuming view events from Kafka
 func (ep *EventProcessor) ProcessViewForAnalytics(event models.ViewEvent) {
 	// Increment view count
 	if err := ep.firestore.IncrementViewCount(event.PostID); err != nil {
-		log.Printf("Failed to increment view count: %v", err)
+		logger.Infof("Failed to increment view count: %v", err)
 	}
 	
 	// Update trending score
 	if err := ep.firestore.UpdateTrendingScoreFromView(event.PostID); err != nil {
-		log.Printf("Failed to update trending score: %v", err)
+		logger.Infof("Failed to update trending score: %v", err)
 	}
 	
-	log.Printf("Updated analytics for view on post %s", event.PostID)
+	logger.Infof("Updated analytics for view on post %s", event.PostID)
 }
 
 // ProcessRemixForAnalytics updates analytics when consuming remix events from Kafka
 func (ep *EventProcessor) ProcessRemixForAnalytics(event models.RemixEvent) {
 	// Track remix chain
 	if err := ep.firestore.TrackRemixChain(event.OriginalPostID, event.RemixPostID); err != nil {
-		log.Printf("Failed to track remix chain: %v", err)
+		logger.Infof("Failed to track remix chain: %v", err)
 	}
 	
 	// Update trending score for original post
 	if err := ep.firestore.UpdateTrendingScoreFromRemix(event.OriginalPostID); err != nil {
-		log.Printf("Failed to update trending score: %v", err)
+		logger.Infof("Failed to update trending score: %v", err)
 	}
 	
-	log.Printf("Updated analytics for remix: %s -> %s", event.OriginalPostID, event.RemixPostID)
+	logger.Infof("Updated analytics for remix: %s -> %s", event.OriginalPostID, event.RemixPostID)
 }
 
 // ProcessContentMetadata handles content metadata and generates keywords
@@ -85,7 +85,7 @@ func (ep *EventProcessor) ProcessContentMetadata(event models.ContentMetadata) e
 	// Extract keywords using Vertex AI
 	keywords, err := ep.vertexAI.ExtractKeywords(event.Prompt, event.ContentType)
 	if err != nil {
-		log.Printf("Failed to extract keywords: %v", err)
+		logger.Infof("Failed to extract keywords: %v", err)
 		// Continue with empty keywords
 		keywords = &models.KeywordExtractionResponse{
 			Keywords: []string{},
@@ -100,16 +100,16 @@ func (ep *EventProcessor) ProcessContentMetadata(event models.ContentMetadata) e
 
 	// Publish to Kafka
 	if err := ep.producer.PublishContentMetadata(event); err != nil {
-		log.Printf("Failed to publish content metadata: %v", err)
+		logger.Infof("Failed to publish content metadata: %v", err)
 		return err
 	}
 
 	// Update Firestore
 	if err := ep.firestore.UpdateContentMetadata(event.PostID, keywords.Keywords, keywords.Category, keywords.Style); err != nil {
-		log.Printf("Failed to update content metadata in Firestore: %v", err)
+		logger.Infof("Failed to update content metadata in Firestore: %v", err)
 	}
 
-	log.Printf("Processed content metadata for post %s with %d keywords", event.PostID, len(keywords.Keywords))
+	logger.Infof("Processed content metadata for post %s with %d keywords", event.PostID, len(keywords.Keywords))
 	return nil
 }
 
@@ -117,16 +117,16 @@ func (ep *EventProcessor) ProcessContentMetadata(event models.ContentMetadata) e
 func (ep *EventProcessor) ProcessView(event models.ViewEvent) error {
 	// Publish to Kafka
 	if err := ep.producer.PublishView(event); err != nil {
-		log.Printf("Failed to publish view: %v", err)
+		logger.Infof("Failed to publish view: %v", err)
 		return err
 	}
 
 	// Increment view count in Firestore
 	if err := ep.firestore.IncrementViewCount(event.PostID); err != nil {
-		log.Printf("Failed to increment view count: %v", err)
+		logger.Infof("Failed to increment view count: %v", err)
 	}
 
-	log.Printf("Processed view for post %s by user %s", event.PostID, event.UserID)
+	logger.Infof("Processed view for post %s by user %s", event.PostID, event.UserID)
 	return nil
 }
 
@@ -134,16 +134,16 @@ func (ep *EventProcessor) ProcessView(event models.ViewEvent) error {
 func (ep *EventProcessor) ProcessRemix(event models.RemixEvent) error {
 	// Publish to Kafka
 	if err := ep.producer.PublishRemix(event); err != nil {
-		log.Printf("Failed to publish remix: %v", err)
+		logger.Infof("Failed to publish remix: %v", err)
 		return err
 	}
 
 	// Track remix chain in Firestore
 	if err := ep.firestore.TrackRemixChain(event.OriginalPostID, event.RemixPostID); err != nil {
-		log.Printf("Failed to track remix chain: %v", err)
+		logger.Infof("Failed to track remix chain: %v", err)
 	}
 
-	log.Printf("Processed remix: %s -> %s", event.OriginalPostID, event.RemixPostID)
+	logger.Infof("Processed remix: %s -> %s", event.OriginalPostID, event.RemixPostID)
 	return nil
 }
 
@@ -162,7 +162,7 @@ func (ep *EventProcessor) ProcessTrendingScore(score models.TrendingScore) {
 	})
 
 	if err != nil {
-		log.Printf("Failed to predict virality: %v", err)
+		logger.Infof("Failed to predict virality: %v", err)
 		prediction = &models.ViralPredictionResponse{
 			ViralProbability: 0.5,
 			Confidence:       0.5,
@@ -174,15 +174,15 @@ func (ep *EventProcessor) ProcessTrendingScore(score models.TrendingScore) {
 
 	// Save to Firestore
 	if err := ep.firestore.SaveTrendingScore(score); err != nil {
-		log.Printf("Failed to save trending score: %v", err)
+		logger.Infof("Failed to save trending score: %v", err)
 	}
 
-	log.Printf("Processed trending score for post %s: score=%.2f, viral_prob=%.2f", 
+	logger.Infof("Processed trending score for post %s: score=%.2f, viral_prob=%.2f", 
 		score.PostID, score.Score, score.ViralProbability)
 
 	// If viral probability is high, trigger notifications
 	if score.ViralProbability > 0.7 {
-		log.Printf("🔥 VIRAL ALERT: Post %s has %.0f%% viral probability!", 
+		logger.Infof("🔥 VIRAL ALERT: Post %s has %.0f%% viral probability!", 
 			score.PostID, score.ViralProbability*100)
 		// TODO: Send push notifications
 	}
@@ -192,10 +192,10 @@ func (ep *EventProcessor) ProcessTrendingScore(score models.TrendingScore) {
 func (ep *EventProcessor) ProcessRecommendation(rec models.Recommendation) {
 	// Save to Firestore
 	if err := ep.firestore.SaveRecommendation(rec); err != nil {
-		log.Printf("Failed to save recommendation: %v", err)
+		logger.Infof("Failed to save recommendation: %v", err)
 	}
 
-	log.Printf("Processed recommendation for user %s: post %s (score=%.2f)", 
+	logger.Infof("Processed recommendation for user %s: post %s (score=%.2f)", 
 		rec.UserID, rec.PostID, rec.Score)
 }
 

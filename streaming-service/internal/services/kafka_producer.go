@@ -3,7 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"confluent-viral-intelligence/internal/logger"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"confluent-viral-intelligence/internal/config"
@@ -36,9 +36,9 @@ func NewKafkaProducer(cfg *config.Config) (*KafkaProducer, error) {
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					log.Printf("Delivery failed: %v\n", ev.TopicPartition.Error)
+					logger.Infof("Delivery failed: %v\n", ev.TopicPartition.Error)
 				} else {
-					log.Printf("Delivered message to %v\n", ev.TopicPartition)
+					logger.Infof("Delivered message to %v\n", ev.TopicPartition)
 				}
 			}
 		}
