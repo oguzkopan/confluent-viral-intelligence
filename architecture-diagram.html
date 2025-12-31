@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YarimAI Architecture - Confluent Solution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 1400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            font-size: 42px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 20px;
+            margin-bottom: 50px;
+        }
+        
+        .architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .layer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            position: relative;
+        }
+        
+        .component {
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            border: 3px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 30px 40px;
+            min-width: 250px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .component.highlight {
+            background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+            border-color: #0066FF;
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 102, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .component.highlight .component-title {
+            color: white;
+        }
+        
+        .component.highlight .component-desc {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .component-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .component-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .component-desc {
+            font-size: 16px;
+            color: #718096;
+            line-height: 1.5;
+        }
+        
+        .arrow {
+            font-size: 40px;
+            color: #cbd5e0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .kafka-topics {
+            background: #f7fafc;
+            border: 2px dashed #0066FF;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .kafka-topics h3 {
+            color: #0066FF;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .topic {
+            background: white;
+            border: 2px solid #0066FF;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0066FF;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0066FF;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 YarimAI Architecture</h1>
+        <p class="subtitle">Real-Time Viral Intelligence with Confluent Cloud</p>
+        
+        <div class="architecture">
+            <!-- Layer 1: Frontend -->
+            <div class="layer">
+                <div class="component">
+                    <div class="component-icon">🌐</div>
+                    <div class="component-title">YarimAI Web App</div>
+                    <div class="component-desc">React + TypeScript<br>Real-time WebSocket Updates</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Layer 2: Backend -->
+            <div class="layer">
+                <div class="component">
+                    <div class="component-icon">⚙️</div>
+                    <div class="component-title">Backend API</div>
+                    <div class="component-desc">Go (Golang)<br>REST + WebSocket</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Layer 3: Confluent Cloud (Highlighted) -->
+            <div class="layer">
+                <div class="component highlight">
+                    <div class="component-icon">⚡</div>
+                    <div class="component-title">Confluent Cloud</div>
+                    <div class="component-desc">Apache Kafka + Flink<br>Real-Time Event Streaming</div>
+                    <div class="badge">CORE TECHNOLOGY</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Layer 4: Processing -->
+            <div class="layer">
+                <div class="component">
+                    <div class="component-icon">🔄</div>
+                    <div class="component-title">Streaming Service</div>
+                    <div class="component-desc">Google Cloud Run<br>Auto-scaling Processing</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Layer 5: Storage & Analytics -->
+            <div class="layer">
+                <div class="component">
+                    <div class="component-icon">🗄️</div>
+                    <div class="component-title">Firestore Database</div>
+                    <div class="component-desc">Real-Time NoSQL<br>Instant Sync</div>
+                </div>
+                
+                <div class="component">
+                    <div class="component-icon">📊</div>
+                    <div class="component-title">Analytics Dashboard</div>
+                    <div class="component-desc">Live Metrics<br>Trending Intelligence</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kafka Topics -->
+        <div class="kafka-topics">
+            <h3>📡 Confluent Kafka Topics (6 Topics)</h3>
+            <div class="topics-grid">
+                <div class="topic">user-interactions</div>
+                <div class="topic">content-metadata</div>
+                <div class="topic">view-events</div>
+                <div class="topic">remix-events</div>
+                <div class="topic">trending-scores</div>
+                <div class="topic">recommendations</div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">&lt;100ms</div>
+                <div class="stat-label">End-to-End Latency</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Kafka Topics</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">Real-Time</div>
+                <div class="stat-label">Processing</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Scalability</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

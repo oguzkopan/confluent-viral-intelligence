@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene 6: User Interaction Calculation & Credit System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slide {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            max-width: 1600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 22px;
+            margin-bottom: 50px;
+        }
+        
+        .inspiration-chain {
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            border: 3px solid #0066FF;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+        }
+        
+        .chain-title {
+            text-align: center;
+            color: #0066FF;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 40px;
+        }
+        
+        .chain-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .user-node {
+            background: white;
+            border: 4px solid #0066FF;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+        
+        .user-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
+        }
+        
+        .user-node.creator {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-color: #48bb78;
+            color: white;
+        }
+        
+        .user-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .user-label {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .user-action {
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        .user-node.creator .user-action {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .chain-arrow {
+            font-size: 40px;
+            color: #0066FF;
+        }
+        
+        .credit-flow {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+        }
+        
+        .credit-flow h3 {
+            text-align: center;
+            color: #ffd700;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        
+        .credit-items {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .credit-item {
+            background: rgba(255,255,255,0.1);
+            border-left: 5px solid #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .credit-desc {
+            font-size: 16px;
+        }
+        
+        .credit-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+        
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 40px 0;
+        }
+        
+        .level-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 3px solid #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .level-card:hover {
+            transform: translateY(-5px);
+            border-color: #0066FF;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .level-card.active {
+            background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+            border-color: #0066FF;
+            color: white;
+        }
+        
+        .level-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        
+        .level-card.active .level-number {
+            color: white;
+        }
+        
+        .level-percentage {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0066FF;
+        }
+        
+        .level-card.active .level-percentage {
+            color: #ffd700;
+        }
+        
+        .confluent-badge {
+            background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .confluent-badge h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        
+        .confluent-badge p {
+            font-size: 18px;
+            opacity: 0.95;
+        }
+        
+        .processing-time {
+            display: inline-block;
+            background: #ffd700;
+            color: #1a202c;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 15px;
+        }
+        
+        .total-earnings {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+        }
+        
+        .total-earnings-value {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .total-earnings-label {
+            font-size: 22px;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>💰 10-Level Inspiration Chain</h1>
+        <p class="subtitle">Real-Time Credit Distribution via Confluent</p>
+        
+        <!-- Inspiration Chain Visualization -->
+        <div class="inspiration-chain">
+            <div class="chain-title">🔗 How Credits Flow Through the Chain</div>
+            
+            <div class="chain-flow">
+                <div class="user-node creator">
+                    <div class="user-icon">👤</div>
+                    <div class="user-label">User A</div>
+                    <div class="user-action">Creates Original</div>
+                </div>
+                
+                <div class="chain-arrow">→</div>
+                
+                <div class="user-node">
+                    <div class="user-icon">👤</div>
+                    <div class="user-label">User B</div>
+                    <div class="user-action">Remixes A's Work</div>
+                </div>
+                
+                <div class="chain-arrow">→</div>
+                
+                <div class="user-node">
+                    <div class="user-icon">👤</div>
+                    <div class="user-label">User C</div>
+                    <div class="user-action">Remixes B's Work</div>
+                </div>
+            </div>
+            
+            <div class="credit-flow">
+                <h3>💸 Credit Distribution (Generation Cost: 100 credits)</h3>
+                <div class="credit-items">
+                    <div class="credit-item">
+                        <div class="credit-desc">User A earns from User B's generation (Level 1)</div>
+                        <div class="credit-amount">10 credits</div>
+                    </div>
+                    <div class="credit-item">
+                        <div class="credit-desc">User A earns from User C's generation (Level 2)</div>
+                        <div class="credit-amount">1 credit</div>
+                    </div>
+                    <div class="credit-item">
+                        <div class="credit-desc">User B earns from User C's generation (Level 1)</div>
+                        <div class="credit-amount">10 credits</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 10 Levels Grid -->
+        <div class="levels-grid">
+            <div class="level-card active">
+                <div class="level-number">Level 1</div>
+                <div class="level-percentage">10%</div>
+            </div>
+            <div class="level-card active">
+                <div class="level-number">Level 2</div>
+                <div class="level-percentage">1%</div>
+            </div>
+            <div class="level-card active">
+                <div class="level-number">Level 3</div>
+                <div class="level-percentage">0.1%</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 4</div>
+                <div class="level-percentage">0.01%</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 5</div>
+                <div class="level-percentage">0.001%</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 6</div>
+                <div class="level-percentage">...</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 7</div>
+                <div class="level-percentage">...</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 8</div>
+                <div class="level-percentage">...</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 9</div>
+                <div class="level-percentage">...</div>
+            </div>
+            <div class="level-card">
+                <div class="level-number">Level 10</div>
+                <div class="level-percentage">...</div>
+            </div>
+        </div>
+        
+        <!-- Total Earnings Example -->
+        <div class="total-earnings">
+            <div class="total-earnings-value">11 Credits</div>
+            <div class="total-earnings-label">User A's Total Earnings from Inspiration Chain</div>
+        </div>
+        
+        <!-- Confluent Processing Badge -->
+        <div class="confluent-badge">
+            <h3>⚡ Powered by Confluent Cloud</h3>
+            <p>Every remix event streams through the <strong>remix-events</strong> topic.<br>
+            Apache Flink calculates credit distribution across all 10 levels instantly.<br>
+            Creators see earnings update in real-time as their work inspires others.</p>
+            <div class="processing-time">⏱️ Processed in &lt;100ms</div>
+        </div>
+    </div>
+</body>
+</html>
